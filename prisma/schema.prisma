@@ -1,0 +1,49 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model File {
+  id          String        @id @default(uuid())
+  name        String
+  directory   Directory     @relation(fields: [directoryId], references: [id]) //File to Directory = 1:1 
+  directoryId String
+  versions    FileVersion[] //File to FileVersion = 1:N
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("files")
+}
+
+model FileVersion {
+  id        String   @id @default(uuid())
+  name      String
+  mimeType  String
+  size      Int
+  file      File     @relation(fields: [fileId], references: [id]) //FileVersion to File = 1:1 
+  fileId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("file_versions")
+}
+
+model Directory {
+  id          String      @id @default(uuid())
+  name        String
+  parent      Directory?  @relation(fields: [parentId], references: [id], name: "DirectoryToDirectory") //根目录父节点允许为空
+  parentId    String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  files       File[] //Directory to File = 1:N
+  directories Directory[] @relation("DirectoryToDirectory") //自关联name属性不可省略
+
+  @@map("directories")
+}
